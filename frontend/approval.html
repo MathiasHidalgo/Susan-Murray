@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Approvals — Susan Murray</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 2px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+    }
+    .tab.active {
+      background: #1a1a2e;
+      color: #fff;
+      border-color: #1a1a2e;
+    }
+    .list-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .list-card-info h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .list-card-info p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 3px;
+    }
+    .list-card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 120px;
+      align-items: flex-end;
+    }
+    .btn-approve {
+      background: #16a34a;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+    }
+    .btn-approve:hover { background: #15803d; }
+    .btn-reject {
+      background: #ef4444;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+    }
+    .btn-reject:hover { background: #dc2626; }
+    .btn-view {
+      background: #f4f6f9;
+      color: #333;
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+    }
+    .btn-view:hover { background: #e9eaf0; }
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: #999;
+      font-size: 15px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+
+    /* Packing Slip styles inside modal */
+    .slip {
+      padding: 32px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .slip-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .slip-header .company { font-size: 13px; line-height: 1.8; }
+    .slip-header .company strong { font-size: 14px; }
+    .slip-title {
+      font-size: 26px;
+      font-weight: 300;
+      margin-bottom: 20px;
+    }
+    .slip-ref {
+      text-align: right;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .slip-ref strong { display: block; font-size: 15px; }
+    .slip-parties {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .slip-parties h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      color: #888;
+    }
+    .slip-parties p {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .slip-logistics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #1a1a2e;
+    }
+    .slip-logistics div { font-size: 12px; }
+    .slip-logistics div span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 2px;
+    }
+    .slip-items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+    .slip-items thead tr {
+      background: #f0f0f0;
+    }
+    .slip-items th {
+      padding: 10px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      text-align: left;
+      color: #555;
+      background: #f0f0f0;
+    }
+    .slip-items td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .slip-items td:last-child { text-align: right; font-weight: 600; }
+    .slip-items th:last-child { text-align: right; }
+    .slip-actions {
+      display: flex;
+      gap: 12px;
+      padding: 20px 32px;
+      border-top: 1px solid #eee;
+      justify-content: flex-end;
+      background: #fafafa;
+      border-radius: 0 0 12px 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <span class="brand">🧺 Susan Murray</span>
+    <a href="index.html">Dashboard</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="create-list.html">New List</a>
+    <a href="approval.html">Approvals</a>
+  </nav>
+
+  <div class="container">
+    <h1>Packing Lists</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('pending', this)">⏳ Pending</button>
+      <button class="tab" onclick="switchTab('approved', this)">✅ Approved</button>
+      <button class="tab" onclick="switchTab('rejected', this)">❌ Rejected</button>
+      <button class="tab" onclick="switchTab('', this)">📋 All</button>
+    </div>
+
+    <!-- List cards -->
+    <div id="listContainer">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="slip" id="slipContent">
+        <!-- filled dynamically -->
+      </div>
+      <div class="slip-actions" id="slipActions">
+        <!-- filled dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal" style="max-width:720px">
+    <div style="padding:28px 32px; border-bottom:1px solid #eee">
+      <h2 style="font-size:20px; margin:0" id="editModalTitle">Edit Packing List</h2>
+    </div>
+
+    <div style="padding:24px 32px; overflow-y:auto; max-height:70vh">
+      <input type="hidden" id="editId"/>
+
+      <!-- Bill To -->
+      <div style="margin-bottom:20px">
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:12px">
+          💳 Bill To
+        </h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="eBillToName" placeholder="e.g. Sky Schapiro"/>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" id="eBillToPhone" placeholder="e.g. 416-414-6912"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ship To -->
+      <div style="margin-bottom:20px">
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:12px">
+          📦 Ship To
+        </h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="form-group">
+            <label>Venue Name</label>
+            <input type="text" id="eShipToName" placeholder="e.g. Beth Sholom"/>
+          </div>
+          <div class="form-group">
+            <label>Event Name</label>
+            <input type="text" id="eShipToEvent" placeholder="e.g. Gabes Bar-Mitzvah"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" id="eShipToAddress" placeholder="Full address"/>
+        </div>
+      </div>
+
+      <!-- Logistics -->
+      <div style="margin-bottom:20px">
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:12px">
+          🚚 Logistics
+        </h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label>Ship Date</label>
+            <input type="date" id="eShipDate"/>
+          </div>
+          <div class="form-group">
+            <label>Ship Via</label>
+            <input type="text" id="eShipVia"/>
+          </div>
+          <div class="form-group">
+            <label>Tracking No.</label>
+            <input type="text" id="eTrackingNumber"/>
+          </div>
+          <div class="form-group">
+            <label>Delivery Time</label>
+            <input type="text" id="eDeliveryTime"/>
+          </div>
+          <div class="form-group">
+            <label>Return Date</label>
+            <input type="date" id="eReturnDate"/>
+          </div>
+          <div class="form-group">
+            <label>Event Date</label>
+            <input type="date" id="eEventDate"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div style="margin-bottom:20px">
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:12px">
+          📋 Items
+        </h3>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#f4f6f9">
+              <th style="padding:10px 8px;font-size:12px;text-align:left;text-transform:uppercase">Item</th>
+              <th style="padding:10px 8px;font-size:12px;text-align:left;text-transform:uppercase">Description</th>
+              <th style="padding:10px 8px;font-size:12px;text-align:left;text-transform:uppercase;width:70px">Qty</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="editItemsBody"></tbody>
+        </table>
+        <button 
+          onclick="addEditItemRow()"
+          style="margin-top:10px;width:100%;padding:9px;background:#f0f0ff;color:#4f46e5;
+                 border:1px dashed #4f46e5;border-radius:6px;cursor:pointer;font-size:13px">
+          + Add Item
+        </button>
+      </div>
+
+      <!-- Note -->
+      <div class="form-group">
+        <label>📝 Note</label>
+        <textarea id="eNote" rows="2"
+          style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px"
+          placeholder="Any special instructions..."></textarea>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div style="padding:16px 32px;border-top:1px solid #eee;display:flex;
+                justify-content:flex-end;gap:10px;background:#fafafa;
+                border-radius:0 0 12px 12px">
+      <button onclick="closeEditModal()" class="btn-view">Cancel</button>
+      <button onclick="saveEdit()" class="btn-primary">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Modal -->
+<div class="modal-overlay" id="printModalOverlay">
+  <div class="modal" style="max-width:760px">
+
+    <!-- Printable area -->
+    <div id="printArea" style="padding:32px">
+      <!-- filled dynamically -->
+    </div>
+
+    <!-- Action bar (hidden when printing) -->
+    <div class="slip-actions no-print">
+      <button class="btn-view" onclick="closePrintModal()">Close</button>
+      <button class="btn-primary" onclick="window.print()">🖨️ Print</button>
+    </div>
+
+  </div>
+</div>
+
+  <script src="js/approval.js"></script>
+</body>
+</html>

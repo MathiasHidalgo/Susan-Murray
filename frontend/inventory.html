@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventory — Laundry App</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav>
+    <span class="brand">🧺 Laundry App</span>
+    <a href="index.html">Dashboard</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="create-list.html">New List</a>
+    <a href="approval.html">Approvals</a>
+  </nav>
+
+  <div class="container">
+    <h1>Inventory</h1>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input type="text" id="search" placeholder="Search by name or size..." />
+      <select id="filterColor">
+        <option value="">All Colors</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">All Statuses</option>
+        <option value="ready">Ready</option>
+        <option value="in use">In Use</option>
+        <option value="damaged">Damaged</option>
+        <option value="washing">Washing</option>
+      </select>
+      <button class="btn-primary" onclick="openModal()">+ Add Item</button>
+    </div>
+
+    <!-- Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Color</th>
+          <th>Size</th>
+          <th>Stock</th>
+          <th>Status</th>
+          <th>Note</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryTable">
+        <tr><td colspan="7">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2 id="modalTitle">Add Item</h2>
+      <input type="hidden" id="editId" />
+
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="fieldName" placeholder="e.g. Satina" />
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <input type="text" id="fieldColor" placeholder="e.g. Yellow" />
+      </div>
+      <div class="form-group">
+        <label>Size</label>
+        <input type="text" id="fieldSize" placeholder='e.g. 132"' />
+      </div>
+      <div class="form-group">
+        <label>Stock</label>
+        <input type="number" id="fieldStock" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fieldStatus">
+          <option value="ready">Ready</option>
+          <option value="in use">In Use</option>
+          <option value="damaged">Damaged</option>
+          <option value="washing">Washing</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Note (optional)</label>
+        <textarea id="fieldNote" rows="2" placeholder="Any extra info..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveItem()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/inventory.js"></script>
+</body>
+</html>
