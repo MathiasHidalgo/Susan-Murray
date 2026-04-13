@@ -1,38 +1,33 @@
 const express = require('express');
-const router  = express.Router();
+const router  = require('express').Router();
 const db      = require('../db');
 
 router.get('/', async (req, res) => {
   try {
-    // Total inventory items
-    const [[{ totalItems }]] = await db.query(
+    const [totalItemsResult] = await db.query(
       'SELECT COUNT(*) AS totalItems FROM inventory'
     );
 
-    // Low stock items (under 10)
-    const [[{ lowStock }]] = await db.query(
+    const [lowStockResult] = await db.query(
       'SELECT COUNT(*) AS lowStock FROM inventory WHERE stock < 10'
     );
 
-    // Total stock units
-    const [[{ totalStock }]] = await db.query(
+    const [totalStockResult] = await db.query(
       'SELECT SUM(stock) AS totalStock FROM inventory'
     );
 
-    // Packing lists by status
-    const [[{ pending }]] = await db.query(
+    const [pendingResult] = await db.query(
       'SELECT COUNT(*) AS pending FROM packing_lists WHERE status = "pending"'
     );
 
-    const [[{ approved }]] = await db.query(
+    const [approvedResult] = await db.query(
       'SELECT COUNT(*) AS approved FROM packing_lists WHERE status = "approved"'
     );
 
-    const [[{ rejected }]] = await db.query(
+    const [rejectedResult] = await db.query(
       'SELECT COUNT(*) AS rejected FROM packing_lists WHERE status = "rejected"'
     );
 
-    // 5 most recent packing lists
     const [recent] = await db.query(`
       SELECT 
         pl.id,
@@ -50,18 +45,17 @@ router.get('/', async (req, res) => {
       LIMIT 5
     `);
 
-    // Low stock items list
     const [lowStockItems] = await db.query(
       'SELECT id, name, color, size, stock FROM inventory WHERE stock < 10 ORDER BY stock ASC'
     );
 
     res.json({
-      totalItems,
-      lowStock,
-      totalStock: totalStock || 0,
-      pending,
-      approved,
-      rejected,
+      totalItems:   totalItemsResult[0].totalItems,
+      lowStock:     lowStockResult[0].lowStock,
+      totalStock:   totalStockResult[0].totalStock || 0,
+      pending:      pendingResult[0].pending,
+      approved:     approvedResult[0].approved,
+      rejected:     rejectedResult[0].rejected,
       recent,
       lowStockItems
     });

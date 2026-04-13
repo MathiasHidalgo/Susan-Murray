@@ -1,102 +1,69 @@
 const API = 'https://susan-murray-production.up.railway.app/api';
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadDashboard();
+const express = require('express');
+const router  = require('express').Router();
+const db      = require('../db');
+
+router.get('/', async (req, res) => {
+  try {
+    const [totalItemsResult] = await db.query(
+      'SELECT COUNT(*) AS totalItems FROM inventory'
+    );
+
+    const [lowStockResult] = await db.query(
+      'SELECT COUNT(*) AS lowStock FROM inventory WHERE stock < 10'
+    );
+
+    const [totalStockResult] = await db.query(
+      'SELECT SUM(stock) AS totalStock FROM inventory'
+    );
+
+    const [pendingResult] = await db.query(
+      'SELECT COUNT(*) AS pending FROM packing_lists WHERE status = "pending"'
+    );
+
+    const [approvedResult] = await db.query(
+      'SELECT COUNT(*) AS approved FROM packing_lists WHERE status = "approved"'
+    );
+
+    const [rejectedResult] = await db.query(
+      'SELECT COUNT(*) AS rejected FROM packing_lists WHERE status = "rejected"'
+    );
+
+    const [recent] = await db.query(`
+      SELECT 
+        pl.id,
+        pl.reference_number,
+        pl.status,
+        pl.bill_to_name,
+        pl.ship_to_name,
+        pl.ship_to_event,
+        pl.event_date,
+        pl.created_at,
+        u.name AS created_by_name
+      FROM packing_lists pl
+      JOIN users u ON pl.created_by = u.id
+      ORDER BY pl.created_at DESC
+      LIMIT 5
+    `);
+
+    const [lowStockItems] = await db.query(
+      'SELECT id, name, color, size, stock FROM inventory WHERE stock < 10 ORDER BY stock ASC'
+    );
+
+    res.json({
+      totalItems:   totalItemsResult[0].totalItems,
+      lowStock:     lowStockResult[0].lowStock,
+      totalStock:   totalStockResult[0].totalStock || 0,
+      pending:      pendingResult[0].pending,
+      approved:     approvedResult[0].approved,
+      rejected:     rejectedResult[0].rejected,
+      recent,
+      lowStockItems
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-async function loadDashboard() {
-  const res  = await fetch(`${API}/dashboard`);
-  const data = await res.json();
-
-  renderStats(data);
-  renderRecentLists(data.recent);
-  renderLowStock(data.lowStockItems);
-}
-
-function renderStats(data) {
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card info">
-      <div class="stat-label">Inventory Items</div>
-      <div class="stat-value">${data.totalItems}</div>
-      <div class="stat-sub">${data.totalStock} total units in stock</div>
-    </div>
-    <div class="stat-card ${data.lowStock > 0 ? 'danger' : 'success'}">
-      <div class="stat-label">Low Stock</div>
-      <div class="stat-value">${data.lowStock}</div>
-      <div class="stat-sub">items below 10 units</div>
-    </div>
-    <div class="stat-card warning">
-      <div class="stat-label">Pending Approval</div>
-      <div class="stat-value">${data.pending}</div>
-      <div class="stat-sub">packing lists waiting</div>
-    </div>
-    <div class="stat-card success">
-      <div class="stat-label">Approved</div>
-      <div class="stat-value">${data.approved}</div>
-      <div class="stat-sub">packing lists approved</div>
-    </div>
-    <div class="stat-card danger">
-      <div class="stat-label">Rejected</div>
-      <div class="stat-value">${data.rejected}</div>
-      <div class="stat-sub">packing lists rejected</div>
-    </div>
-  `;
-}
-
-function renderRecentLists(lists) {
-  const container = document.getElementById('recentLists');
-
-  if (!lists || lists.length === 0) {
-    container.innerHTML = '<div class="empty-panel">No packing lists yet.</div>';
-    return;
-  }
-
-  container.innerHTML = lists.map(pl => {
-    const statusBadge = {
-      pending:  '<span class="badge badge-washing">Pending</span>',
-      approved: '<span class="badge badge-ready">Approved</span>',
-      rejected: '<span class="badge badge-damaged">Rejected</span>',
-    }[pl.status];
-
-    const eventDate = pl.event_date
-      ? new Date(pl.event_date).toLocaleDateString('en-CA', {
-          month: 'short', day: 'numeric', year: 'numeric'
-        })
-      : '—';
-
-    return `
-      <div class="recent-row">
-        <div class="recent-row-info">
-          <h4>${pl.reference_number} ${statusBadge}</h4>
-          <p>
-            💳 ${pl.bill_to_name || '—'} &nbsp;|&nbsp;
-            📦 ${pl.ship_to_name || '—'}
-            ${pl.ship_to_event ? `— ${pl.ship_to_event}` : ''}
-          </p>
-          <p>📅 Event: ${eventDate} &nbsp;|&nbsp; 👤 ${pl.created_by_name}</p>
-        </div>
-        <a href="approval.html" style="font-size:12px;color:#4f46e5;font-weight:600;
-           text-decoration:none;white-space:nowrap">View →</a>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderLowStock(items) {
-  const container = document.getElementById('lowStockList');
-
-  if (!items || items.length === 0) {
-    container.innerHTML = '<div class="empty-panel">✅ All items well stocked.</div>';
-    return;
-  }
-
-  container.innerHTML = items.map(item => `
-    <div class="low-stock-row">
-      <div>
-        <div class="item-name">${item.name}</div>
-        <div class="item-detail">${item.color || ''} ${item.size || ''}</div>
-      </div>
-      <div class="stock-count">${item.stock} left</div>
-    </div>
-  `).join('');
-}
+module.exports = router;
