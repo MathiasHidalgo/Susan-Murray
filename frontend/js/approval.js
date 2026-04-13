@@ -1,4 +1,4 @@
-const API = 'https://susan-murray-production.up.railway.app/api';
+const API = 'https://susan-murray-production.up.railway.app/api/inventory';
 let currentTab = "pending";
 
 document.addEventListener("DOMContentLoaded", () => {
