@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://susan-murray-production.up.railway.app/api';
 
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();

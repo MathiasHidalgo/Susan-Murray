@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api/inventory';
+const API = 'https://susan-murray-production.up.railway.app/api';
 
 // Load inventory on page load
 document.addEventListener('DOMContentLoaded', () => {
