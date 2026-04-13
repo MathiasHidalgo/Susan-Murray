@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
   try {
     const { search, color, status } = req.query;
 
-    let query = 'SELECT * FROM inventory WHERE 1=1';
+    let query = 'SELECT * FROM inventory';
     const params = [];
 
     if (search) {
